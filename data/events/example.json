@@ -1,0 +1,21 @@
+[
+    {
+      "@type": "calendarEvent",
+      "uid": "90b87587-46af-4504-a1fa-67adbd8d51b6",
+      "updated": "2026-10-20T14:00:00Z",
+      "title": "Pumpkin carving",
+      "participants": [
+        "Dan",
+        "Liv",
+        "Leo",
+        "Mia"
+      ],
+      "description": "",
+      "start": "2026-10-30T18:00:00",
+      "timeZone": "America/New_York",
+      "durationMinutes": 90,
+      "location": "At home",
+      "status": "confirmed",
+      "deletedAt": null
+    }
+]
