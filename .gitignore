@@ -1,0 +1,14 @@
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+.env
+__pycache__/
+.venv/
+venv/
+env/
+
+.vscode/
+.idea/
