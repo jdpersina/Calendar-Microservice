@@ -1,3 +1,5 @@
+"""Flask microservice that stores calendar events, one JSON file per calendar."""
+
 from flask import Flask, abort, jsonify, request
 from werkzeug.exceptions import HTTPException
 from storage import EventStore
@@ -8,6 +10,7 @@ import uuid
 
 app = Flask(__name__)
 
+stores = {}
 RESTORE_WINDOW_SECONDS = 10
 DATA_DIR = Path(__file__).parent / "data" / "events"
 REQUIRED_FIELDS = ("title", "start", "timeZone", "durationMinutes")
@@ -17,6 +20,9 @@ EDITABLE_FIELDS = {"title", "participants", "description", "start", "timeZone", 
 ### CALENDAR FUNCTIONS ###
 
 def get_store(calendar_id):
+    """
+    Return the EventStore for `calendar_id`, or abort with 404 if the calendar doesn't exist.
+    """
     #Preventing unsafe ID input
     if not re.fullmatch(r"[a-z0-9_-]+", calendar_id):
         abort(404, description="Calendar not found")
@@ -32,7 +38,9 @@ def utc_now():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 def purge_deleted(events):
-    #Soft-deleted events stay in the file for the undo window, then get dropped the next time anything is saved
+    """
+    Remove events that were deleted more than RESTORE_WINDOW_SECONDS ago.
+    """
     cutoff = datetime.now(timezone.utc) - timedelta(seconds=RESTORE_WINDOW_SECONDS)
     events[:] = [
         e for e in events
@@ -48,6 +56,9 @@ def find_event(events, uid, include_deleted=False):
     abort(404, description="Event not found")
 
 def read_event_fields(required=()):
+    """
+    Abort with 400 if the object isn't JSON or is missing `required` fields.
+    """
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
         abort(400, description="Request body must be a JSON object")
@@ -71,18 +82,27 @@ def json_error(e):
 # LIST EVENTS
 @app.get("/calendars/<calendar_id>/events")
 def list_events(calendar_id):
+    """
+    Return all events on the calendar that aren't deleted.
+    """
     events = get_store(calendar_id).load()
     return jsonify([event for event in events if event.get("deletedAt") is None])
 
 # GET ONE EVENT
 @app.get("/calendars/<calendar_id>/events/<uid>")
 def get_event(calendar_id, uid):
+    """
+    Return one event, or 404 if it doesn't exist or is deleted.
+    """
     events = get_store(calendar_id).load()
     return jsonify(find_event(events, uid))
 
 # CREATE EVENT
 @app.post("/calendars/<calendar_id>/events")
 def create_event(calendar_id):
+    """
+    Create an event from the JSON body and return it with status 201.
+    """
     store = get_store(calendar_id)
     body = read_event_fields(required=REQUIRED_FIELDS)
 
@@ -111,6 +131,9 @@ def create_event(calendar_id):
 # UPDATE EVENT
 @app.patch("/calendars/<calendar_id>/events/<uid>")
 def update_event(calendar_id, uid):
+    """
+    Change only the fields in the JSON body and return the updated event
+    """
     store = get_store(calendar_id)
     body = read_event_fields()
 
@@ -126,6 +149,10 @@ def update_event(calendar_id, uid):
 # DELETE EVENT
 @app.delete("/calendars/<calendar_id>/events/<uid>")
 def delete_event(calendar_id, uid):
+    """
+    Soft-delete an event by setting deletedAt, and return it.
+    The event can be restored within the restore window.
+    """
     store = get_store(calendar_id)
 
     def change(events):
@@ -141,6 +168,9 @@ def delete_event(calendar_id, uid):
 # RESTORE SOFT-DELETED EVENT
 @app.post("/calendars/<calendar_id>/events/<uid>/restore")
 def restore_event(calendar_id, uid):
+    """
+    Undo a delete and return the event, or 404 if it isn't deleted or the window has passed.
+    """
     store = get_store(calendar_id)
 
     def change(events):
