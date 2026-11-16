@@ -105,3 +105,23 @@ Deletes are **soft deletes**. A deleted event is hidden right away but stays res
 ```
 
 Full endpoint documentation will be added as each route is finished.
+
+## To Do
+
+### Routes
+- [ ] `GET /calendars/<calendar_id>/events`: list events, hiding deleted ones
+- [ ] `POST /calendars/<calendar_id>/events`: create an event (service sets `uid` and `updated`)
+- [ ] `GET /calendars/<calendar_id>/events/<uid>`: get one event
+- [ ] `PATCH /calendars/<calendar_id>/events/<uid>`: update an event and refresh `updated`
+- [ ] `DELETE /calendars/<calendar_id>/events/<uid>`: soft delete by setting `deletedAt`
+- [ ] `POST /calendars/<calendar_id>/events/<uid>/restore`: undo a delete inside the restore window
+
+### Service
+- [ ] Call `purge_deleted` on every save
+- [ ] Validate request bodies (required fields, `status` values, `timeZone`, `durationMinutes`)
+- [ ] Return JSON error responses instead of Flask's default HTML pages
+- [ ] Make `RESTORE_WINDOW_SECONDS` in `app.py` (currently `7`) match the 10 seconds documented above
+
+### Docs and testing
+- [ ] Document each endpoint with example requests and responses
+- [ ] Add tests for each route and for the restore window
