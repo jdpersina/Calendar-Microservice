@@ -98,30 +98,51 @@ Deletes are **soft deletes**. A deleted event is hidden right away but stays res
 
 ## API
 
-**In progress.** All routes are scoped to a calendar:
+All routes are scoped to a calendar:
 
 ```
 /calendars/<calendar_id>/events
 ```
 
-Full endpoint documentation will be added as each route is finished.
+### Requesting data
 
-## To Do
+| Action | Method | URL |
+|---|---|---|
+| List events | `GET` | `/calendars/<calendar_id>/events` |
+| Get one event | `GET` | `/calendars/<calendar_id>/events/<uid>` |
+| Create an event | `POST` | `/calendars/<calendar_id>/events` |
+| Update an event | `PATCH` | `/calendars/<calendar_id>/events/<uid>` |
+| Delete an event | `DELETE` | `/calendars/<calendar_id>/events/<uid>` |
+| Restore a deleted event | `POST` | `/calendars/<calendar_id>/events/<uid>/restore` |
 
-### Routes
-- [ ] `GET /calendars/<calendar_id>/events`: list events, hiding deleted ones
-- [ ] `POST /calendars/<calendar_id>/events`: create an event (service sets `uid` and `updated`)
-- [ ] `GET /calendars/<calendar_id>/events/<uid>`: get one event
-- [ ] `PATCH /calendars/<calendar_id>/events/<uid>`: update an event and refresh `updated`
-- [ ] `DELETE /calendars/<calendar_id>/events/<uid>`: soft delete by setting `deletedAt`
-- [ ] `POST /calendars/<calendar_id>/events/<uid>/restore`: undo a delete inside the restore window
+Create and update take a JSON body using the fields from the event format above. Create requires `title`, `start`, `timeZone`, and `durationMinutes`. Update only needs the fields being changed.
 
-### Service
-- [ ] Call `purge_deleted` on every save
-- [ ] Validate request bodies (required fields, `status` values, `timeZone`, `durationMinutes`)
-- [ ] Return JSON error responses instead of Flask's default HTML pages
-- [ ] Make `RESTORE_WINDOW_SECONDS` in `app.py` (currently `7`) match the 10 seconds documented above
+Example call (Python, using `requests`):
 
-### Docs and testing
-- [ ] Document each endpoint with example requests and responses
-- [ ] Add tests for each route and for the restore window
+```python
+import requests
+
+response = requests.post(
+    "http://localhost:8000/calendars/persinaj/events",
+    json={
+        "title": "Team Planning Meeting",
+        "start": "2026-11-05T10:00:00",
+        "timeZone": "America/New_York",
+        "durationMinutes": 60,
+    },
+)
+```
+
+### Receiving data
+
+Responses are JSON. Listing returns an array of events; every other route returns a single event. Errors return a `400` or `404` status with a body like `{"error": "Event not found"}`.
+
+Example call (continuing from above):
+
+```python
+if response.ok:
+    event = response.json()
+    print(event["uid"], event["title"])
+else:
+    print(response.json()["error"])
+```
