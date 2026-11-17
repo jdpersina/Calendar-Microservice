@@ -150,7 +150,7 @@ else:
 ## UML Sequence Diagrams
 
 ### Create Event
-createUML.png
+![Create Event UML](createUML.png)
 
 ### Get Events
-getUML.png
+![Get Events UML](getUML.png)
