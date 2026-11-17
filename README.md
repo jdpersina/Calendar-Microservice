@@ -146,3 +146,11 @@ if response.ok:
 else:
     print(response.json()["error"])
 ```
+
+## UML Sequence Diagrams
+
+### Create Event
+createUML.png
+
+### Get Events
+getUML.png
